@@ -1,0 +1,32 @@
+name: Weekly Project Submission
+description: "Submit a project to complete a milestone"
+title: "Project: <insert project title here>"
+body:
+  # - type: input
+  #   id: name
+  #   attributes:
+  #     label: Project Name
+  #     description: Name of your project
+  #   validations:
+  #     required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Provide a short description of your submission
+    validations:
+      required: true
+  - type: input
+    id: repo_url
+    attributes:
+      label: Project Repository URL
+      description: URL of the GitHub repo with your assignment. If private, ensure you provide repo access to the instructor (pibzion)
+    validations:
+      required: true
+  - type: input
+    id: demo_url
+    attributes:
+      label: Demo Video URL
+      description: URL of the video demo for your Stramlit application. 2 mins max!
+    validations:
+      required: true
