@@ -1,0 +1,29 @@
+# app_config.py
+import os
+from dotenv import load_dotenv, find_dotenv
+
+dotenv_path = find_dotenv()
+if dotenv_path:
+    load_dotenv(dotenv_path, override=False)
+
+class EnvConfig:
+    @property
+    def groq_api_key(self):
+        return os.getenv("GROQ_API_KEY")
+
+    @property
+    def openai_api_key(self):
+        return os.getenv("OPENAI_API_KEY")
+
+    @property
+    def default_bot_name(self):
+        return os.getenv("DEFAULT_BOT_NAME", "BotMan")
+
+    @property
+    def default_system_prompt(self):
+        return os.getenv(
+            "DEFAULT_SYSTEM_PROMPT",
+            "You are a helpful, concise, and accurate question-answering assistant. Be polite and prefer clarity. If you don't know an answer, say so."
+        )
+
+env_config = EnvConfig()

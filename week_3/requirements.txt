@@ -1,0 +1,16 @@
+streamlit>=1.22
+python-dotenv
+openai>=1.0.0
+langchain
+langchain-openai
+langchain-community
+langchain-core
+newspaper3k
+yt-dlp
+openai-whisper
+sounddevice
+soundfile
+elevenlabs
+chromadb
+faiss-cpu
+transformers
