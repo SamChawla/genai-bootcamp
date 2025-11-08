@@ -26,8 +26,8 @@ try:
 except Exception:
     env_config = None
 
-st.set_page_config(page_title="Summarizer + Voice RAG Hub", layout="wide")
-st.title("Summarizer + Voice RAG Hub")
+st.set_page_config(page_title="Summarizer + Voice Assist Hub", layout="wide")
+st.title("Summarizer + Voice Assist Hub")
 st.markdown("Single UI for News, YouTube, and Voice-RAG workflows. Select a mode from the sidebar.")
 
 # Sidebar
@@ -37,8 +37,43 @@ with st.sidebar:
     st.markdown("---")
 
     provider = st.selectbox("Provider / Model Family", ["openai", "ollama", "groq", "local"])
-    model_suggest = "gpt-4o-mini" if provider == "openai" else "llama-3.3-70b-versatile"
-    model = st.text_input("Model name", value=model_suggest)
+    
+    try:
+        from utils.ollama import list_local_models
+    except Exception:
+        def list_local_models():
+            return []
+
+    # model_suggest = "gpt-4o-mini" if provider == "openai" else "llama-3.3-70b-versatile"
+    # model = st.text_input("Model name", value=model_suggest)
+    
+    if provider == "openai":
+    # prefer the OPENAI_MODELS set from main if available, else fallback list
+        try:
+            from main import OPENAI_MODELS as _OPENAI_MODELS
+            openai_models = sorted(list(_OPENAI_MODELS))
+        except Exception:
+            openai_models = ["gpt-5", "gpt-5-mini", "gpt-4o-mini", "gpt-4o", "gpt-4"]
+
+        model = st.selectbox("Model name", openai_models, index=openai_models.index("gpt-4o-mini") if "gpt-4o-mini" in openai_models else 0)
+
+    elif provider == "ollama":
+        # list local ollama models if possible
+        ollama_models = list_local_models() or []
+        DEFAULT_OLLAMA = ["llama-3.3-70b-versatile", "llama3.2:latest"]
+        model_options = ollama_models or DEFAULT_OLLAMA
+
+        if ollama_models:
+            st.caption(f"✅ Detected {len(ollama_models)} local Ollama model(s).")
+            model = st.selectbox("Model name", model_options)
+        else:
+            st.caption("⚠️ No local Ollama models detected. Use a default or enter custom name.")
+            model = st.selectbox("Model name (defaults)", model_options)
+            # allow typing custom override if needed
+            custom = st.text_input("Or type Ollama model name (optional)", value="")
+            if custom and custom.strip():
+                model = custom.strip()
+    
     api_key_input = st.text_input("API Key (session only)", type="password", help="Optional: override env key for this session")
     st.markdown("---")
 
