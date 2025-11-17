@@ -1,13 +1,20 @@
-from typing import TypedDict, List
+# src/states/blog_state.py
+from __future__ import annotations
+from dataclasses import dataclass
 
-class BlogState(TypedDict):
+
+@dataclass
+class BlogState:
     """
-    This is the "memory" or "state" that all agents share and update.
+    Dataclass holding generated blog data.
     """
-    topic: str              # The initial blog post topic from the user
-    titles: List[str]       # A list of potential titles
-    selected_title: str     # The single title chosen by the outline agent
-    outline: str            # The blog post outline
-    draft: str              # The first draft of the blog
-    critique: str           # The editor's critique of the draft
-    final_blog: str         # The final, polished blog post
+    topic: str
+    title: str
+    body: str
+
+    def to_markdown(self) -> str:
+        """Return a markdown representation suitable for download."""
+        md = f"# {self.title}\n\n"
+        md += f"**Topic:** {self.topic}\n\n"
+        md += self.body
+        return md

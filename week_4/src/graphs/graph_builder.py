@@ -1,37 +1,30 @@
-# File: src/graphs/graph_builder.py
-import streamlit as st
-from langgraph.graph import StateGraph, START, END
+# src/graphs/graph_builder.py
+"""
+Simple orchestration layer that composes the BlogGenerator and returns output.
+In the original repository LangGraph was used; this module keeps the same
+logical separation without requiring the LangGraph runtime.
+"""
+
+from __future__ import annotations
+import logging
+from typing import Optional
+
+from src.llms.groq_client import GroqClient
+from src.nodes.blog_node import BlogGenerator
 from src.states.blog_state import BlogState
-from src.nodes.blog_nodes import BlogNodes
 
-class GraphBuilder:
-    
-    def __init__(self, llm):
-        self.llm = llm
-        self.blog_nodes_obj = BlogNodes(self.llm)
+logger = logging.getLogger(__name__)
 
-    @st.cache_resource
-    def build_graph(_self): # Use _self for st.cache_resource
-        """
-        Assembles the nodes into a compiled Langgraph.
-        Caches the compiled graph.
-        """
-        workflow = StateGraph(BlogState)
-        
-        # Add nodes
-        workflow.add_node("title_agent", _self.blog_nodes_obj.title_agent)
-        workflow.add_node("outline_agent", _self.blog_nodes_obj.outline_agent)
-        workflow.add_node("writer_agent", _self.blog_nodes_obj.writer_agent)
-        workflow.add_node("editor_agent", _self.blog_nodes_obj.editor_agent)
-        workflow.add_node("final_blog_node", _self.blog_nodes_obj.final_blog_node)
-        
-        # Add edges
-        workflow.add_edge(START, "title_agent")
-        workflow.add_edge("title_agent", "outline_agent")
-        workflow.add_edge("outline_agent", "writer_agent")
-        workflow.add_edge("writer_agent", "editor_agent")
-        workflow.add_edge("editor_agent", "final_blog_node")
-        workflow.add_edge("final_blog_node", END)
-        
-        # Compile the graph
-        return workflow.compile()
+
+class BlogGraphBuilder:
+    """
+    Orchestrates the two-step flow: title -> body.
+    """
+
+    def __init__(self, api_key: Optional[str] = None, model: str = "llama-3.1-8b-instant"):
+        self.client = GroqClient(api_key=api_key, default_model=model)
+        self.generator = BlogGenerator(self.client)
+
+    def build_and_run(self, topic: str, approx_words: int = 700) -> BlogState:
+        logger.info("Running blog graph for topic: %s", topic)
+        return self.generator.generate_blog(topic=topic, approx_words=approx_words)
