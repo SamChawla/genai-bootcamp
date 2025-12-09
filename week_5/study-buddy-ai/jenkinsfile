@@ -1,8 +1,7 @@
-
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_REPO = "dataguru97/studybuddy"
+        DOCKER_HUB_REPO = "samchawla/studybuddy"
         DOCKER_HUB_CREDENTIALS_ID = "dockerhub-token"
         IMAGE_TAG = "v${BUILD_NUMBER}"
     }
@@ -10,14 +9,24 @@ pipeline {
         stage('Checkout Github') {
             steps {
                 echo 'Checking out code from GitHub...'
-                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-token', url: 'https://github.com/data-guru0/STUDY-BUDDY-AI.git']])
+                // 1. UPDATED BRANCH NAME to match your working branch
+                checkout scmGit(branches: [[name: '*/study-buddy-ai']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-token', url: 'https://github.com/SamChawla/genai-bootcamp.git']])
             }
         }        
         stage('Build Docker Image') {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
+                    
+                    // 2. ADDED 'cd' to navigate to the folder with the Dockerfile
+                    sh 'cd week_5/study-buddy-ai'
+                    
+                    // 3. UPDATED DOCKER BUILD: 'docker.build' now builds from the current directory ('.')
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}", ".") 
+                    
+                    // IMPORTANT: Revert directory back to root if subsequent stages need it,
+                    // or if the agent environment persists the change.
+                    // For safety, you can add: sh 'cd ../..' or ensure the path is included in all stages.
                 }
             }
         }
@@ -33,9 +42,11 @@ pipeline {
         }
         stage('Update Deployment YAML with New Tag') {
             steps {
+                // NOTE: This stage assumes manifests/deployment.yaml is located in the repository root.
+                // If it is inside week_5/study-buddy-ai, you must adjust the path here too.
                 script {
                     sh """
-                    sed -i 's|image: dataguru97/studybuddy:.*|image: dataguru97/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
+                    sed -i 's|image: samchawla/studybuddy:.*|image: samchawla/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
                     """
                 }
             }
@@ -46,11 +57,12 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                         sh '''
-                        git config user.name "data-guru0"
-                        git config user.email "gyrogodnon@gmail.com"
+                        git config user.name "Sumit S Chawla"
+                        git config user.email "sam.chawla26@gmail.com"
                         git add manifests/deployment.yaml
                         git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/data-guru0/STUDY-BUDDY-AI.git HEAD:main
+                        # Ensure 'HEAD:main' is correct if you are committing to the 'main' branch
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/SamChawla/genai-bootcamp.git HEAD:main
                         '''
                     }
                 }
